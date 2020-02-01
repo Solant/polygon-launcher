@@ -1,20 +1,33 @@
 {
-  "name": "nodegui-starter",
+  "name": "polygon-launcher",
   "version": "1.0.0",
   "main": "index.js",
-  "author": "Atul R <atulanand94@gmail.com>",
   "license": "MIT",
   "private": true,
   "scripts": {
     "build": "webpack -p",
     "start": "webpack && qode ./dist/index.js",
-    "debug": "webpack && qode --inspect ./dist/index.js"
+    "debug": "webpack && qode --inspect ./dist/index.js",
+    "pack": "npm run build && nodegui-packer --pack dist"
   },
   "dependencies": {
-    "@nodegui/nodegui": "^0.13.2"
+    "@google-cloud/storage": "^4.3.0",
+    "@nodegui/nodegui": "^0.13.2",
+    "@types/md5-file": "^4.0.1",
+    "@types/pretty-bytes": "^5.2.0",
+    "@types/recursive-readdir": "^2.2.0",
+    "@types/request": "^2.48.4",
+    "md5-file": "^4.0.0",
+    "open": "^7.0.1",
+    "pretty-bytes": "^5.3.0",
+    "recursive-readdir": "^2.2.2",
+    "request": "^2.88.0",
+    "request-progress": "^3.0.0"
   },
   "devDependencies": {
+    "@nodegui/packer": "^1.1.2",
     "@types/node": "^13.1.4",
+    "copy-webpack-plugin": "^5.1.1",
     "file-loader": "^5.0.2",
     "native-addon-loader": "^2.0.1",
     "ts-loader": "^6.2.1",

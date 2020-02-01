@@ -2,3 +2,7 @@ node_modules
 dist/
 *.log
 .vscode
+/deploy/*/build/
+/.idea/
+/*.iml
+WindowsNoEditor
