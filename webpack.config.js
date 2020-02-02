@@ -1,48 +1,70 @@
 const path = require("path");
-const CopyPlugin = require('copy-webpack-plugin');
+const webpack = require("webpack");
+const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
+const CopyWebpackPlugin = require("copy-webpack-plugin");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
-module.exports = {
-  mode: process.NODE_ENV || "development",
-  entry: "./src",
-  target: "node",
-  output: {
-    path: path.resolve(__dirname, "dist"),
-    filename: "index.js"
-  },
-  node: {
-    __dirname: true,
-    __filename: true
-  },
-  plugins: [
-      new CopyPlugin([{
-        from: 'assets',
-      }])
-  ],
-  module: {
-    rules: [
-      {
-        test: /\.tsx?$/,
-        use: "ts-loader",
-        exclude: /node_modules/
-      },
-      {
-        test: /\.(png|jpe?g|gif|svg)$/i,
-        use: [{ loader: "file-loader" }]
-      },
-      {
-        test: /\.node$/,
-        use: [
-          {
-            loader: "native-addon-loader",
-            options: {
-              name: "[name]-[hash].[ext]"
-            }
+module.exports = (env, argv) => {
+  const config = {
+    mode: "production",
+    entry: ["./src/index.tsx"],
+    target: "node",
+    output: {
+      path: path.resolve(__dirname, "dist"),
+      filename: "index.js"
+    },
+    node: {
+      __dirname: true,
+      __filename: true
+    },
+    module: {
+      rules: [
+        {
+          test: /\.(j|t)sx?$/,
+          exclude: /node_modules/,
+          use: {
+            loader: "babel-loader",
+            options: { cacheDirectory: true, cacheCompression: false }
           }
-        ]
-      }
-    ]
-  },
-  resolve: {
-    extensions: [".tsx", ".ts", ".js", ".jsx"]
+        },
+        {
+          test: /\.(png|jpe?g|gif|svg|bmp|otf)$/i,
+          use: [{ loader: "file-loader" }]
+        },
+        {
+          test: /\.node/i,
+          use: [
+            {
+              loader: "native-addon-loader",
+              options: {
+                name: "[name]-[hash].[ext]"
+              }
+            }
+          ]
+        }
+      ]
+    },
+    plugins: [
+        new CopyWebpackPlugin([
+          { from: 'assets' }
+        ])
+    ],
+    resolve: {
+      extensions: [".tsx", ".ts", ".js", ".jsx", ".json"]
+    }
+  };
+
+  if (argv.mode === "development") {
+    config.mode = "development";
+    config.plugins.push(new webpack.HotModuleReplacementPlugin());
+    config.plugins.push(new ForkTsCheckerWebpackPlugin());
+    config.devtool = "source-map";
+    config.watch = true;
+    config.entry.unshift("webpack/hot/poll?100");
   }
+
+  if (argv.p) {
+    config.plugins.push(new CleanWebpackPlugin());
+  }
+  return config;
 };

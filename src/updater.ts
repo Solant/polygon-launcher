@@ -103,7 +103,7 @@ export async function downloadUpdates(files: RemoteFile[]) {
                 return Promise.resolve();
             }
         } catch (e) {
-            return Promise.resolve();
+            // skip if file is not created
         }
 
         return new Promise((res, rej) => {
