@@ -1,6 +1,6 @@
 import { Storage } from '@google-cloud/storage';
 import recursive from 'recursive-readdir';
-import { createWriteStream, mkdirSync } from 'fs';
+import { createWriteStream, mkdirSync, statSync } from 'fs';
 import { resolve, sep } from 'path';
 import md5Promise from 'md5-file/promise';
 import prettyBytes from 'pretty-bytes';
@@ -97,6 +97,14 @@ export async function downloadUpdates(files: RemoteFile[]) {
     return Promise.all(files.map(f => {
         const nativePath: string = toNativeDelimiter(f.path);
         createFolderForPath(nativePath);
+
+        try {
+            if (statSync(nativePath).isDirectory()) {
+                return Promise.resolve();
+            }
+        } catch (e) {
+            return Promise.resolve();
+        }
 
         return new Promise((res, rej) => {
             progress(request(f.downloadLink))
