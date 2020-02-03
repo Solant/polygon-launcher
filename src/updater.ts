@@ -93,8 +93,17 @@ function createFolderForPath(path: string) {
     mkdirSync(folderPath, { recursive: true });
 }
 
-export async function downloadUpdates(files: RemoteFile[]) {
-    return Promise.all(files.map(f => {
+interface Cb {
+    file: string,
+    index: {
+        current: number,
+        all: number,
+    }
+    progress: number,
+}
+export async function downloadUpdates(files: RemoteFile[], cb: (arg: Cb) => void) {
+    for (let i = 0; i < files.length; i++) {
+        const f = files[i];
         const nativePath: string = toNativeDelimiter(f.path);
         createFolderForPath(nativePath);
 
@@ -106,15 +115,26 @@ export async function downloadUpdates(files: RemoteFile[]) {
             // skip if file is not created
         }
 
-        return new Promise((res, rej) => {
+        function last<T>(arg: Array<T>): T {
+            return arg[arg.length - 1];
+        }
+
+        await new Promise((res, rej) => {
             progress(request(f.downloadLink))
                 // @ts-ignore
-                .on('progress', (state) => {
-                    console.log(state.percent)
+                .on('progress', (state: { percent: number }) => {
+                    cb({
+                        file: last(f.path.split('/')),
+                        progress: state.percent,
+                        index: {
+                            current: i,
+                            all: files.length,
+                        }
+                    });
                 })
                 .on('error', () => rej())
                 .on('end', () => res())
                 .pipe(createWriteStream(nativePath));
         });
-    }));
+    }
 }

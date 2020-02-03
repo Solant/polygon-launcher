@@ -1,4 +1,4 @@
-import { Text, Window, hot, View } from '@nodegui/react-nodegui';
+import { Text, Window, hot, View, ProgressBar, Button as NativeButton } from '@nodegui/react-nodegui';
 import { NativeElement, QFontDatabase, QMainWindow, QMouseEvent, WindowType } from '@nodegui/nodegui';
 import React from 'react';
 import { resolve } from 'path';
@@ -9,12 +9,18 @@ import { downloadUpdates, findNewRemoteFiles, getLocalFiles, getRemoteFiles, get
 
 QFontDatabase.addApplicationFont(resolve('dist', 'Metropolis-Medium.otf'));
 
-class App extends React.Component<any, { x: number, y: number, msg: string }> {
+interface Progress {
+    file: string,
+    currentIndex: number,
+    total: number,
+    progress: number,
+}
+class App extends React.Component<any, { x: number, y: number, msg: string, progress: Progress | undefined}> {
     private readonly windowRef: React.RefObject<QMainWindow>;
 
     constructor(props: any) {
         super(props);
-        this.state = { x: 0, y: 0, msg: '' };
+        this.state = { x: 0, y: 0, msg: '', progress: undefined };
         this.windowRef = React.createRef<QMainWindow>();
     }
 
@@ -23,7 +29,7 @@ class App extends React.Component<any, { x: number, y: number, msg: string }> {
     }
 
     async update() {
-        this.setState({ ...this.state, msg: 'Проверка обновлений' });
+        this.setState({...this.state, msg: 'Проверка обновлений'});
 
         const [local, remote] = await Promise.all([getLocalFiles(), getRemoteFiles()]);
         const updates = findNewRemoteFiles(local, remote);
@@ -32,11 +38,23 @@ class App extends React.Component<any, { x: number, y: number, msg: string }> {
         if (updates.length) {
             text += '\nВыполняется обновление';
         }
-        this.setState({ ...this.state, msg: text });
+        this.setState({...this.state, msg: text});
         if (updates.length) {
-            await downloadUpdates(updates);
-            this.setState({ ...this.state, msg: `Обновление завершено`});
+            await downloadUpdates(updates, (arg) => {
+                this.updateProgress({
+                    file: arg.file,
+                    currentIndex: arg.index.current,
+                    total: arg.index.all,
+                    progress: arg.progress,
+                });
+            });
+            this.setState({...this.state, msg: `Обновление завершено`});
+            this.updateProgress(undefined);
         }
+    }
+
+    updateProgress(payload: Progress | undefined) {
+        this.setState({ ...this.state, progress: payload });
     }
 
     handleMove(e?: NativeElement) {
@@ -76,6 +94,18 @@ class App extends React.Component<any, { x: number, y: number, msg: string }> {
                         {this.state.msg}
                     </Text>
 
+                    {this.state.progress ? (
+                        <View>
+                            <Text styleSheet={'color: white;'}>{this.state.progress.file}</Text>
+                            <Text styleSheet={'color: white;'}>
+                                {`${this.state.progress.currentIndex} / ${this.state.progress.total}`}
+                            </Text>
+                            <ProgressBar value={this.state.progress.progress * 100}/>
+                        </View>
+                    ): (
+                        <View/>
+                    )}
+
                     <View styleSheet={'flex: 1; flex-direction: row;'}>
                         <Button icon={resolve('dist', 'play.png')} clicked={() => this.start()}/>
                         <Button icon={resolve('dist', 'update.png')} clicked={() => this.update()}/>
@@ -88,6 +118,13 @@ class App extends React.Component<any, { x: number, y: number, msg: string }> {
                         <SocialButton icon={resolve('dist', 'vk.png')}
                                       clicked={() => open('https://vk.com/polygon_online')}/>
                     </View>
+
+                    <NativeButton
+                        text={'Все сломалось'}
+                        flat={true}
+                        styleSheet={'color: white; background-color: transparent;'}
+                        on={{'clicked': () => open('https://github.com/Solant/polygon-launcher#troubleshooting')}}
+                    />
                 </View>
             </Window>
         );
