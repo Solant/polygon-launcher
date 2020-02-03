@@ -13,7 +13,7 @@ export class SocialButton extends React.Component<{
                 flat={true}
                 iconSize={new QSize(40, 40)}
                 on={{ clicked: () => this.props.clicked() }}
-                styleSheet={'background-color: transparent'}
+                styleSheet={'background-color: transparent; margin: 5px;'}
             />
         );
     }

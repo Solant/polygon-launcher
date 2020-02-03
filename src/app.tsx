@@ -1,5 +1,5 @@
 import { Text, Window, hot, View, ProgressBar, Button as NativeButton } from '@nodegui/react-nodegui';
-import { NativeElement, QFontDatabase, QMainWindow, QMouseEvent, WindowType } from '@nodegui/nodegui';
+import { NativeElement, QFontDatabase, QMainWindow, QMouseEvent, QProgressBar, WindowType } from '@nodegui/nodegui';
 import React from 'react';
 import { resolve } from 'path';
 import open from 'open';
@@ -8,6 +8,21 @@ import { SocialButton } from './components/social-button';
 import { downloadUpdates, findNewRemoteFiles, getLocalFiles, getRemoteFiles, getUpdateDownloadSize } from './updater';
 
 QFontDatabase.addApplicationFont(resolve('dist', 'Metropolis-Medium.otf'));
+
+const stylesheet = `
+QProgressBar {
+    background-color: transparent;
+    border: 0;
+    width: 400px;
+    height: 2px;
+    color: white;
+    font-size: 1px;
+    position: absolute;
+}
+QProgressBar::chunk {
+    background-color: white;
+}
+`;
 
 interface Progress {
     percentage: number,
@@ -110,6 +125,13 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
                 styleSheet={'background-color: #181818;'}
             >
                 <View styleSheet={'flex: 1; flex-direction: column; align-items: "center";'}>
+                    {this.state.progress &&
+                        <ProgressBar
+                            styleSheet={stylesheet}
+                            value={this.state.progress!.percentage}
+                        />
+                    }
+
                     <Text
                         styleSheet={'font-family: "Metropolis Medium"; font-size: 50px; color: white; margin-top: 20px;'}>
                         POLYGON
@@ -119,21 +141,13 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
                         {this.state.msg}
                     </Text>
 
-                    {this.state.progress ? (
-                        <View>
-                            <ProgressBar value={this.state.progress!.percentage}/>
-                        </View>
-                    ): (
-                        <View/>
-                    )}
-
-                    <View styleSheet={'flex: 1; flex-direction: row;'}>
+                    <View style={'flex: 1; flex-direction: row;'}>
                         <Button icon={resolve('dist', 'play.png')} clicked={() => this.start()}/>
                         <Button icon={resolve('dist', 'update.png')} clicked={() => this.update()}/>
                         <Button icon={resolve('dist', 'quit.png')} clicked={() => process.exit(0)}/>
                     </View>
 
-                    <View styleSheet={'flex: 1; flex-direction: row;'}>
+                    <View style={'flex: 1; flex-direction: row;'}>
                         <SocialButton icon={resolve('dist', 'tg.png')}
                                       clicked={() => open('https://t.me/polygon_online')}/>
                         <SocialButton icon={resolve('dist', 'vk.png')}
