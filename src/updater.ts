@@ -5,6 +5,7 @@ import { resolve, sep } from 'path';
 import md5Promise from 'md5-file/promise';
 import prettyBytes from 'pretty-bytes';
 import request from 'request';
+const parallelLimit = require('async/parallelLimit');
 const progress = require('request-progress');
 
 const storage = new Storage();
@@ -95,13 +96,10 @@ function createFolderForPath(path: string) {
 
 interface Cb {
     file: string,
-    index: {
-        current: number,
-        all: number,
-    }
     progress: number,
 }
 export async function downloadUpdates(files: RemoteFile[], cb: (arg: Cb) => void) {
+    const promises = [];
     for (let i = 0; i < files.length; i++) {
         const f = files[i];
         const nativePath: string = toNativeDelimiter(f.path);
@@ -119,22 +117,30 @@ export async function downloadUpdates(files: RemoteFile[], cb: (arg: Cb) => void
             return arg[arg.length - 1];
         }
 
-        await new Promise((res, rej) => {
-            progress(request(f.downloadLink))
-                // @ts-ignore
-                .on('progress', (state: { percent: number }) => {
-                    cb({
-                        file: last(f.path.split('/')),
-                        progress: state.percent,
-                        index: {
-                            current: i,
-                            all: files.length,
-                        }
-                    });
-                })
-                .on('error', () => rej())
-                .on('end', () => res())
-                .pipe(createWriteStream(nativePath));
-        });
+        const fun = async () => {
+            return await new Promise((res, rej) => {
+                progress(request(f.downloadLink))
+                    // @ts-ignore
+                    .on('progress', (state: { percent: number }) => {
+                        cb({
+                            file: last(f.path.split('/')),
+                            progress: state.percent,
+                        });
+                    })
+                    .on('error', () => rej())
+                    .on('end', () => {
+                        cb({
+                            file: last(f.path.split('/')),
+                            progress: 1,
+                        });
+                        res()
+                    })
+                    .pipe(createWriteStream(nativePath));
+            });
+        };
+
+        promises.push(fun);
     }
+
+    return parallelLimit(promises, 5);
 }

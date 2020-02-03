@@ -10,10 +10,10 @@ import { downloadUpdates, findNewRemoteFiles, getLocalFiles, getRemoteFiles, get
 QFontDatabase.addApplicationFont(resolve('dist', 'Metropolis-Medium.otf'));
 
 interface Progress {
-    file: string,
-    currentIndex: number,
-    total: number,
-    progress: number,
+    percentage: number,
+    files: {
+        [key: string]: number,
+    },
 }
 class App extends React.Component<any, { x: number, y: number, msg: string, progress: Progress | undefined}> {
     private readonly windowRef: React.RefObject<QMainWindow>;
@@ -40,11 +40,23 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
         }
         this.setState({...this.state, msg: text});
         if (updates.length) {
+            function last<T>(a: Array<T>): T {
+                return a[a.length - 1];
+            }
+
+            this.setState({
+                ...this.state,
+                progress: {
+                    files: updates
+                        .map(v => last(v.path.split('/')))
+                        // @ts-ignore
+                        .reduce((p, c) => { p[c] = 0; return p; }, {}),
+                    percentage: 0,
+                }
+            });
             await downloadUpdates(updates, (arg) => {
                 this.updateProgress({
                     file: arg.file,
-                    currentIndex: arg.index.current,
-                    total: arg.index.all,
                     progress: arg.progress,
                 });
             });
@@ -53,8 +65,21 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
         }
     }
 
-    updateProgress(payload: Progress | undefined) {
-        this.setState({ ...this.state, progress: payload });
+    updateProgress(payload: { file: string, progress: number } | undefined) {
+        if (payload) {
+            const n = {
+                ...this.state.progress!.files,
+                [payload!.file]: payload!.progress
+            };
+            this.setState({
+                progress: {
+                    files: n,
+                    percentage: Object.values(n).reduce((c, p) => c + p, 0) / Object.values(n).length * 100,
+                },
+            });
+        } else {
+            this.setState({ progress: undefined });
+        }
     }
 
     handleMove(e?: NativeElement) {
@@ -96,11 +121,7 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
 
                     {this.state.progress ? (
                         <View>
-                            <Text styleSheet={'color: white;'}>{this.state.progress.file}</Text>
-                            <Text styleSheet={'color: white;'}>
-                                {`${this.state.progress.currentIndex} / ${this.state.progress.total}`}
-                            </Text>
-                            <ProgressBar value={this.state.progress.progress * 100}/>
+                            <ProgressBar value={this.state.progress!.percentage}/>
                         </View>
                     ): (
                         <View/>
