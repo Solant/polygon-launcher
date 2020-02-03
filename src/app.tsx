@@ -141,7 +141,7 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
                     </View>
 
                     <NativeButton
-                        text={'Все сломалось'}
+                        text={'Помощь'}
                         flat={true}
                         styleSheet={'color: white; background-color: transparent;'}
                         on={{'clicked': () => open('https://github.com/Solant/polygon-launcher#troubleshooting')}}
