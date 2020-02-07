@@ -6,9 +6,18 @@ import open from 'open';
 import { Button } from './components/button';
 import { SocialButton } from './components/social-button';
 import { downloadUpdates, findNewRemoteFiles, getLocalFiles, getRemoteFiles, getUpdateDownloadSize } from './updater';
+import { nativeErrorHandler } from './errorHandler';
 import { create } from './Qss';
 
 QFontDatabase.addApplicationFont(resolve('dist', 'Metropolis-Medium.otf'));
+process.on('uncaughtException', error => nativeErrorHandler(error.message, error.stack || ''));
+process.on('unhandledRejection', (reason, promise) => {
+    if (reason instanceof Error) {
+        nativeErrorHandler(reason.message, reason.stack || '');
+    } else {
+        nativeErrorHandler('Unhandled promise rejection', JSON.stringify(reason));
+    }
+});
 
 const stylesheet = `
 QProgressBar {
