@@ -1,6 +1,10 @@
 # Polygon Launcher
 
-Launcher for polygon online project
+Launcher for polygon online project, implemented with awesome [nodegui](https://github.com/nodegui/nodegui) project
+
+![screenshot](screenshot.png)
+
+[Download windows build from google drive here](https://drive.google.com/open?id=1e-ootdhLlpXX2leSVy3Nog2F9_kinc-x)
 
 # Troubleshooting
 Q: Мигает консолька и все :(
