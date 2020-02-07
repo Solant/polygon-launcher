@@ -6,6 +6,7 @@ import open from 'open';
 import { Button } from './components/button';
 import { SocialButton } from './components/social-button';
 import { downloadUpdates, findNewRemoteFiles, getLocalFiles, getRemoteFiles, getUpdateDownloadSize } from './updater';
+import { create } from './Qss';
 
 QFontDatabase.addApplicationFont(resolve('dist', 'Metropolis-Medium.otf'));
 
@@ -18,6 +19,7 @@ QProgressBar {
     color: white;
     font-size: 1px;
     position: absolute;
+    top: 0;
 }
 QProgressBar::chunk {
     background-color: white;
@@ -30,6 +32,38 @@ interface Progress {
         [key: string]: number,
     },
 }
+
+const s = create({
+    root: {
+        flex: 1,
+        justifyContent: 'space-around',
+        alignItems: 'center',
+    },
+    logo: {
+        fontFamily: 'Metropolis Medium',
+        fontSize: '50px',
+        fontWeight: 'bold',
+        color: 'white',
+        marginTop: 20,
+    },
+    message: {
+        color: 'white',
+        height: 50,
+    },
+    actionButtons: {
+        flex: 1,
+        flexDirection: 'row',
+    },
+    socialButtons: {
+        flex: 1,
+        flexDirection: 'row',
+    },
+    help: {
+        backgroundColor: 'transparent',
+        color: 'white',
+    }
+});
+
 class App extends React.Component<any, { x: number, y: number, msg: string, progress: Progress | undefined}> {
     private readonly windowRef: React.RefObject<QMainWindow>;
 
@@ -122,42 +156,42 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
                 on={{ 'MouseMove': e => this.handleMove(e), 'MouseButtonPress': e => this.handleClick(e) }}
                 windowTitle="Polygon Launcher"
                 size={{ width: 400, height: 400, fixed: true }}
-                styleSheet={'background-color: #181818;'}
+                style={'background-color: #181818;'}
             >
-                <View styleSheet={'flex: 1; flex-direction: column; align-items: "center";'}>
+                <View style={s.root}>
                     {this.state.progress &&
                         <ProgressBar
                             styleSheet={stylesheet}
                             value={this.state.progress!.percentage}
                         />
                     }
-
                     <Text
-                        styleSheet={'font-family: "Metropolis Medium"; font-size: 50px; color: white; margin-top: 20px;'}>
+                        style={s.logo}
+                    >
                         POLYGON
                     </Text>
-
-                    <Text styleSheet={'height: 50px; color: white;'}>
+                    <Text style={s.message}>
                         {this.state.msg}
                     </Text>
-
-                    <View style={'flex: 1; flex-direction: row;'}>
-                        <Button icon={resolve('dist', 'play.png')} clicked={() => this.start()}/>
-                        <Button icon={resolve('dist', 'update.png')} clicked={() => this.update()}/>
-                        <Button icon={resolve('dist', 'quit.png')} clicked={() => process.exit(0)}/>
+                    <View>
+                        <View style={s.actionButtons}>
+                            <Button icon={resolve('dist', 'play.png')} clicked={() => this.start()}/>
+                            <Button icon={resolve('dist', 'update.png')} clicked={() => this.update()}/>
+                            <Button icon={resolve('dist', 'quit.png')} clicked={() => process.exit(0)}/>
+                        </View>
                     </View>
-
-                    <View style={'flex: 1; flex-direction: row;'}>
-                        <SocialButton icon={resolve('dist', 'tg.png')}
-                                      clicked={() => open('https://t.me/polygon_online')}/>
-                        <SocialButton icon={resolve('dist', 'vk.png')}
-                                      clicked={() => open('https://vk.com/polygon_online')}/>
+                    <View>
+                        <View style={s.socialButtons}>
+                            <SocialButton icon={resolve('dist', 'tg.png')}
+                                          clicked={() => open('https://t.me/polygon_online')}/>
+                            <SocialButton icon={resolve('dist', 'vk.png')}
+                                          clicked={() => open('https://vk.com/polygon_online')}/>
+                        </View>
                     </View>
-
                     <NativeButton
                         text={'Помощь'}
                         flat={true}
-                        styleSheet={'color: white; background-color: transparent;'}
+                        style={s.help}
                         on={{'clicked': () => open('https://github.com/Solant/polygon-launcher#troubleshooting')}}
                     />
                 </View>
