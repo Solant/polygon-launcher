@@ -7,7 +7,7 @@ import { Button } from './components/button';
 import { SocialButton } from './components/social-button';
 import { downloadUpdates, findNewRemoteFiles, getLocalFiles, getRemoteFiles, getUpdateDownloadSize } from './updater';
 import { nativeErrorHandler } from './errorHandler';
-import { create } from './Qss';
+import { create, units } from 'nodegui-stylesheet';
 
 QFontDatabase.addApplicationFont(resolve('dist', 'Metropolis-Medium.otf'));
 process.on('uncaughtException', error => nativeErrorHandler(error.message, error.stack || ''));
@@ -50,7 +50,7 @@ const s = create({
     },
     logo: {
         fontFamily: 'Metropolis Medium',
-        fontSize: '50px',
+        fontSize: units(50, 'px'),
         fontWeight: 'bold',
         color: 'white',
         marginTop: 20,
