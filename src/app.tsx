@@ -193,6 +193,8 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
                         <View style={s.socialButtons}>
                             <SocialButton icon={resolve('dist', 'tg.png')}
                                           clicked={() => open('https://t.me/polygon_online')}/>
+                            <SocialButton icon={resolve('dist', 'discord.png')}
+                                          clicked={() => open('https://discordapp.com/invite/tc9ayWK')}/>
                             <SocialButton icon={resolve('dist', 'vk.png')}
                                           clicked={() => open('https://vk.com/polygon_online')}/>
                         </View>
