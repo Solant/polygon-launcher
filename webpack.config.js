@@ -47,7 +47,10 @@ module.exports = (env, argv) => {
     plugins: [
         new CopyWebpackPlugin([
           { from: 'assets' }
-        ])
+        ]),
+        new webpack.DefinePlugin({
+          VERSION: JSON.stringify(require('./package.json').version),
+        }),
     ],
     resolve: {
       extensions: [".tsx", ".ts", ".js", ".jsx", ".json"]
