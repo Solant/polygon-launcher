@@ -1,5 +1,14 @@
-import { Text, Window, hot, View, ProgressBar, Button as NativeButton } from '@nodegui/react-nodegui';
-import { NativeElement, QFontDatabase, QMainWindow, QMouseEvent, QProgressBar, WindowType } from '@nodegui/nodegui';
+import { Button as NativeButton, hot, ProgressBar, Text, View, Window } from '@nodegui/react-nodegui';
+import {
+    ButtonRole,
+    NativeElement,
+    QFontDatabase,
+    QMainWindow,
+    QMessageBox,
+    QMouseEvent,
+    QPushButton,
+    WindowType
+} from '@nodegui/nodegui';
 import React from 'react';
 import { resolve } from 'path';
 import open from 'open';
@@ -8,6 +17,8 @@ import { SocialButton } from './components/social-button';
 import { downloadUpdates, findNewRemoteFiles, getLocalFiles, getRemoteFiles, getUpdateDownloadSize } from './updater';
 import { nativeErrorHandler } from './errorHandler';
 import { create, units } from 'nodegui-stylesheet';
+import fetch from 'node-fetch';
+import semver from 'semver';
 
 QFontDatabase.addApplicationFont(resolve('dist', 'Metropolis-Medium.otf'));
 process.on('uncaughtException', error => nativeErrorHandler(error.message, error.stack || ''));
@@ -80,6 +91,40 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
         super(props);
         this.state = { x: 0, y: 0, msg: '', progress: undefined };
         this.windowRef = React.createRef<QMainWindow>();
+
+        function newVersionAvailable(remoteVersion: string): boolean {
+            return semver.gt(remoteVersion, VERSION);
+        }
+
+        fetch('https://api.github.com/repos/Solant/polygon-launcher/releases/latest', {
+            headers: {
+                'Accept': 'application/vnd.github.v3+json',
+            }
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.tag_name && newVersionAvailable(data.tag_name)) {
+                    const dialog = new QMessageBox();
+
+                    const downloadButton = new QPushButton(dialog);
+                    downloadButton.setText('Обновить сейчас');
+                    downloadButton.addEventListener('clicked', () => {
+                        console.log('accepted');
+                    });
+
+                    const closeButton = new QPushButton(dialog);
+                    closeButton.setText('Закрыть');
+                    closeButton.addEventListener('clicked', () => {
+                        dialog.close();
+                    });
+
+                    dialog.setWindowTitle('Доступно обновление');
+                    dialog.setText(`Доступна новая версия ${data.tag_name}`);
+                    dialog.addButton(downloadButton, ButtonRole.AcceptRole);
+                    dialog.addButton(closeButton, ButtonRole.RejectRole);
+                    dialog.show();
+                }
+            });
     }
 
     start() {
