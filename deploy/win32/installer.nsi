@@ -1,5 +1,5 @@
 RequestExecutionLevel User
-InstallDir "$PROGRAMFILES64\PolygonLauncher"
+InstallDir "$LocalAppData\PolygonLauncher"
 !define UninstId "66a8279a-cf50-44f4-b4b8-57506d26e8e7" ; You might want to use a GUID here
 
 !include LogicLib.nsh
