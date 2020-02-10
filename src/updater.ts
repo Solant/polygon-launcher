@@ -37,9 +37,9 @@ interface LocalFile extends FileData {
 export async function getRemoteFiles(): Promise<RemoteFile[]> {
     const [files] = await storage.bucket('polygon-updater.appspot.com').getFiles();
 
-    const promises = files
-        .map(f => f.getMetadata())
-        .map(p => p.then((resp) => {
+    const funcs = files.map(f => {
+        return async function() {
+            const resp = await f.getMetadata();
             const m = resp[0] as GoogleFileMetadata;
             return {
                 path: m.name,
@@ -47,15 +47,20 @@ export async function getRemoteFiles(): Promise<RemoteFile[]> {
                 size: Number.parseInt(m.size, 10),
                 downloadLink: m.mediaLink,
             };
-        }));
+        }
+    });
 
-    return Promise.all(promises);
+    return parallelLimit(funcs, 5);
 }
 
 export async function getLocalFiles(): Promise<LocalFile[]> {
     mkdirSync('WindowsNoEditor', { recursive: true });
     const files = await recursive('WindowsNoEditor');
-    const hashes = await Promise.all(files.map(md5Promise));
+    const hashes = await parallelLimit(files.map(f => {
+        return async function () {
+            return await md5Promise(f);
+        }
+    }), 5);
 
     return files.map((f, i) => {
         const paths = f.split(sep);
