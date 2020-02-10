@@ -109,7 +109,12 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
                     const downloadButton = new QPushButton(dialog);
                     downloadButton.setText('Обновить сейчас');
                     downloadButton.addEventListener('clicked', () => {
-                        console.log('accepted');
+                        const installer = data.assets.find((a: any) => a.name === 'installer.exe');
+                        if (installer) {
+                            open(installer.browser_download_url);
+                        } else {
+                            nativeErrorHandler(`Релиз ${data.tag_name} оказался без инсталлера, сообщите об этой проблеме по кнопке "Помощь"`, '');
+                        }
                     });
 
                     const closeButton = new QPushButton(dialog);
