@@ -20,10 +20,17 @@ import { create, units } from 'nodegui-stylesheet';
 import fetch from 'node-fetch';
 import semver from 'semver';
 import os from 'os';
+import font from '../assets/Metropolis-Medium.otf';
+import playIcon from '../assets/play.png';
+import updateIcon from '../assets/update.png';
+import quitIcon from '../assets/quit.png';
+import vkIcon from '../assets/vk.png';
+import tgIcon from '../assets/tg.png';
+import discordIcon from '../assets/discord.png';
 
 const cpus = os.cpus().length;
 
-QFontDatabase.addApplicationFont(resolve('dist', 'Metropolis-Medium.otf'));
+QFontDatabase.addApplicationFont(font);
 process.on('uncaughtException', error => nativeErrorHandler(error.message, error.stack || ''));
 process.on('unhandledRejection', (reason, promise) => {
     if (reason instanceof Error) {
@@ -237,18 +244,18 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
                     </Text>
                     <View>
                         <View style={s.actionButtons}>
-                            <Button icon={resolve('dist', 'play.png')} clicked={() => this.start()}/>
-                            <Button icon={resolve('dist', 'update.png')} clicked={() => this.update()}/>
-                            <Button icon={resolve('dist', 'quit.png')} clicked={() => process.exit(0)}/>
+                            <Button icon={playIcon} clicked={() => this.start()}/>
+                            <Button icon={updateIcon} clicked={() => this.update()}/>
+                            <Button icon={quitIcon} clicked={() => process.exit(0)}/>
                         </View>
                     </View>
                     <View>
                         <View style={s.socialButtons}>
-                            <SocialButton icon={resolve('dist', 'tg.png')}
+                            <SocialButton icon={tgIcon}
                                           clicked={() => open('https://t.me/polygon_online')}/>
-                            <SocialButton icon={resolve('dist', 'discord.png')}
+                            <SocialButton icon={discordIcon}
                                           clicked={() => open('https://discordapp.com/invite/tc9ayWK')}/>
-                            <SocialButton icon={resolve('dist', 'vk.png')}
+                            <SocialButton icon={vkIcon}
                                           clicked={() => open('https://vk.com/polygon_online')}/>
                         </View>
                     </View>

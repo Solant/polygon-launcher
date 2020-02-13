@@ -1,7 +1,6 @@
 const path = require("path");
 const webpack = require("webpack");
 const ForkTsCheckerWebpackPlugin = require("fork-ts-checker-webpack-plugin");
-const CopyWebpackPlugin = require("copy-webpack-plugin");
 const { CleanWebpackPlugin } = require("clean-webpack-plugin");
 
 module.exports = (env, argv) => {
@@ -29,7 +28,12 @@ module.exports = (env, argv) => {
         },
         {
           test: /\.(png|jpe?g|gif|svg|bmp|otf)$/i,
-          use: [{ loader: "file-loader" }]
+          use: [{
+            loader: "file-loader",
+            options: {
+              publicPath: 'dist'
+            }
+          }]
         },
         {
           test: /\.node/i,
@@ -45,9 +49,6 @@ module.exports = (env, argv) => {
       ]
     },
     plugins: [
-        new CopyWebpackPlugin([
-          { from: 'assets' }
-        ]),
         new webpack.DefinePlugin({
           VERSION: JSON.stringify(require('./package.json').version),
         }),
