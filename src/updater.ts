@@ -34,7 +34,7 @@ interface LocalFile extends FileData {
     systemPath: string;
 }
 
-export async function getRemoteFiles(): Promise<RemoteFile[]> {
+export async function getRemoteFiles(limit: number): Promise<RemoteFile[]> {
     const [files] = await storage.bucket('polygon-updater.appspot.com').getFiles();
 
     const funcs = files.map(f => {
@@ -50,17 +50,17 @@ export async function getRemoteFiles(): Promise<RemoteFile[]> {
         }
     });
 
-    return parallelLimit(funcs, 5);
+    return parallelLimit(funcs, limit);
 }
 
-export async function getLocalFiles(): Promise<LocalFile[]> {
+export async function getLocalFiles(limit: number): Promise<LocalFile[]> {
     mkdirSync('WindowsNoEditor', { recursive: true });
     const files = await recursive('WindowsNoEditor');
     const hashes = await parallelLimit(files.map(f => {
         return async function () {
             return await md5Promise(f);
         }
-    }), 5);
+    }), limit);
 
     return files.map((f, i) => {
         const paths = f.split(sep);
@@ -103,7 +103,7 @@ interface Cb {
     file: string,
     progress: number,
 }
-export async function downloadUpdates(files: RemoteFile[], cb: (arg: Cb) => void) {
+export async function downloadUpdates(files: RemoteFile[], limit: number, cb: (arg: Cb) => void) {
     const promises = [];
     for (let i = 0; i < files.length; i++) {
         const f = files[i];
@@ -147,5 +147,5 @@ export async function downloadUpdates(files: RemoteFile[], cb: (arg: Cb) => void
         promises.push(fun);
     }
 
-    return parallelLimit(promises, 5);
+    return parallelLimit(promises, limit);
 }

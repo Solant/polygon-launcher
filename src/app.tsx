@@ -19,6 +19,9 @@ import { nativeErrorHandler } from './errorHandler';
 import { create, units } from 'nodegui-stylesheet';
 import fetch from 'node-fetch';
 import semver from 'semver';
+import os from 'os';
+
+const cpus = os.cpus().length;
 
 QFontDatabase.addApplicationFont(resolve('dist', 'Metropolis-Medium.otf'));
 process.on('uncaughtException', error => nativeErrorHandler(error.message, error.stack || ''));
@@ -139,7 +142,7 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
     async update() {
         this.setState({...this.state, msg: 'Проверка обновлений'});
 
-        const [local, remote] = await Promise.all([getLocalFiles(), getRemoteFiles()]);
+        const [local, remote] = await Promise.all([getLocalFiles(cpus), getRemoteFiles(cpus)]);
         const updates = findNewRemoteFiles(local, remote);
 
         let text = `Найдено ${updates.length} новых файлов (${getUpdateDownloadSize(updates)})`;
@@ -162,7 +165,7 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
                     percentage: 0,
                 }
             });
-            await downloadUpdates(updates, (arg) => {
+            await downloadUpdates(updates, cpus, (arg) => {
                 this.updateProgress({
                     file: arg.file,
                     progress: arg.progress,
