@@ -4,7 +4,7 @@ Launcher for polygon online project, implemented with awesome [nodegui](https://
 
 ![screenshot](screenshot.png)
 
-[Download windows build from google drive here](https://drive.google.com/open?id=1e-ootdhLlpXX2leSVy3Nog2F9_kinc-x)
+[Download installer from releases tab](https://github.com/Solant/polygon-launcher/releases)
 
 # Troubleshooting
 Q: Мигает консолька и все :(
