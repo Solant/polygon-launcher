@@ -9,7 +9,7 @@ import {
     QPushButton,
     WindowType
 } from '@nodegui/nodegui';
-import React from 'react';
+import React, { FunctionComponent, MutableRefObject, RefObject, useRef, useState } from 'react';
 import { resolve } from 'path';
 import open from 'open';
 import { Button } from './components/button';
@@ -27,6 +27,7 @@ import quitIcon from '../assets/quit.png';
 import vkIcon from '../assets/vk.png';
 import tgIcon from '../assets/tg.png';
 import discordIcon from '../assets/discord.png';
+import useDrag from './useDrag';
 
 const cpus = os.cpus().length;
 
@@ -93,6 +94,126 @@ const s = create({
         color: 'white',
     }
 });
+
+const app: FunctionComponent = () => {
+    const [state, setState] = useState<{ msg: string, progress: Progress | undefined }>({ msg: '', progress: undefined });
+    const windowRef = useRef(undefined);
+    // @ts-ignore
+    const handleMouseEvent = useDrag(windowRef);
+
+    function start() {
+        open(resolve('WindowsNoEditor', 'Polygon.exe'));
+    }
+
+    function updateProgress(payload: { file: string, progress: number, files: { [key: string]: number } } | undefined) {
+        if (payload) {
+            const n = {
+                ...(state.progress?.files ?? payload.files),
+                [payload.file]: payload.progress
+            };
+            setState({
+                ...state,
+                progress: {
+                    files: n,
+                    percentage: Object.values(n).reduce((c, p) => c + p, 0) / Object.values(n).length * 100,
+                },
+            });
+        } else {
+            setState({ ...state, progress: undefined });
+        }
+    }
+
+    async function update() {
+        setState({...state, msg: 'Проверка обновлений'});
+
+        const [local, remote] = await Promise.all([getLocalFiles(cpus), getRemoteFiles(cpus)]);
+        const updates = findNewRemoteFiles(local, remote);
+
+        let text = `Найдено ${updates.length} новых файлов (${getUpdateDownloadSize(updates)})`;
+        if (updates.length) {
+            text += '\nВыполняется обновление';
+        }
+        setState({...state, msg: text});
+        if (updates.length) {
+            function last<T>(a: Array<T>): T {
+                return a[a.length - 1];
+            }
+
+            const files = updates
+                .map(v => last(v.path.split('/')))
+                // @ts-ignore
+                .reduce((p, c) => { p[c] = 0; return p; }, {});
+
+            setState({
+                ...state,
+                progress: {
+                    files,
+                    percentage: 0,
+                }
+            });
+            await downloadUpdates(updates, cpus, (arg) => {
+                updateProgress({
+                    file: arg.file,
+                    progress: arg.progress,
+                    files,
+                });
+            });
+            setState({...state, msg: `Обновление завершено`});
+            updateProgress(undefined);
+        }
+    }
+
+    return (
+        <Window
+            ref={windowRef}
+            windowFlags={{ [WindowType.FramelessWindowHint]: true }}
+            on={{ 'MouseMove': handleMouseEvent, 'MouseButtonPress': handleMouseEvent }}
+            windowTitle="Polygon Launcher"
+            size={{ width: 400, height: 400, fixed: true }}
+            style={'background-color: #181818;'}
+        >
+            <View style={s.root}>
+                {state.progress &&
+                <ProgressBar
+                    styleSheet={stylesheet}
+                    value={state.progress!.percentage}
+                />
+                }
+                <Text
+                    style={s.logo}
+                >
+                    POLYGON
+                </Text>
+                <Text style={s.message}>
+                    {state.msg}
+                </Text>
+                <View>
+                    <View style={s.actionButtons}>
+                        <Button icon={playIcon} clicked={() => start()}/>
+                        <Button icon={updateIcon} clicked={() => update()}/>
+                        <Button icon={quitIcon} clicked={() => process.exit(0)}/>
+                    </View>
+                </View>
+                <View>
+                    <View style={s.socialButtons}>
+                        <SocialButton icon={tgIcon}
+                                      clicked={() => open('https://t.me/polygon_online')}/>
+                        <SocialButton icon={discordIcon}
+                                      clicked={() => open('https://discordapp.com/invite/tc9ayWK')}/>
+                        <SocialButton icon={vkIcon}
+                                      clicked={() => open('https://vk.com/polygon_online')}/>
+                    </View>
+                </View>
+                <NativeButton
+                    text={`Помощь (v${VERSION})`}
+                    flat={true}
+                    style={s.help}
+                    on={{'clicked': () => open('https://github.com/Solant/polygon-launcher#troubleshooting')}}
+                />
+            </View>
+        </Window>
+    );
+}
 
 class App extends React.Component<any, { x: number, y: number, msg: string, progress: Progress | undefined}> {
     private readonly windowRef: React.RefObject<QMainWindow>;
@@ -271,4 +392,4 @@ class App extends React.Component<any, { x: number, y: number, msg: string, prog
     }
 }
 
-export default hot(App);
+export default hot(app);
