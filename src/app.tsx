@@ -1,26 +1,28 @@
 import { Button as NativeButton, hot, ProgressBar, Text, View, Window } from '@nodegui/react-nodegui';
 import {
-    QFontDatabase,
+    QFontDatabase, QMainWindow, WindowState,
     WindowType,
 } from '@nodegui/nodegui';
-import React, { FunctionComponent, useRef, useState } from 'react';
+import React, { FunctionComponent, MutableRefObject, useRef, useState } from 'react';
 import { observer } from 'mobx-react';
 import 'mobx-react/batchingOptOut';
 import { resolve } from 'path';
 import open from 'open';
+import { ToolbarButton } from './components/toolbarButton';
 import { Button } from './components/button';
 import { SocialButton } from './components/social-button';
 import { downloadUpdates, findNewRemoteFiles, getLocalFiles, getRemoteFiles, getUpdateDownloadSize } from './updater';
 import { nativeErrorHandler } from './errorHandler';
-import { create, units } from 'nodegui-stylesheet';
+import { create } from 'nodegui-stylesheet';
 import os from 'os';
 import font from '../assets/Metropolis-Medium.otf';
 import playIcon from '../assets/play.png';
 import updateIcon from '../assets/update.png';
-import quitIcon from '../assets/quit.png';
 import vkIcon from '../assets/vk.png';
 import tgIcon from '../assets/tg.png';
 import discordIcon from '../assets/discord.png';
+import closeIcon from '../assets/close-outline.svg';
+import minimizeIcon from '../assets/remove-outline.svg';
 import useDrag from './useDrag';
 import { store, storeContext, useStore } from './store';
 import { useCheckUpdates } from './useCheckUpdates';
@@ -61,8 +63,7 @@ const s = create({
     },
     logo: {
         fontFamily: 'Metropolis Medium',
-        fontSize: units(50, 'px'),
-        fontWeight: 'bold',
+        fontSize: 50,
         color: 'white',
         marginTop: 20,
     },
@@ -78,6 +79,11 @@ const s = create({
         flex: 1,
         flexDirection: 'row',
     },
+    toolbar: {
+        flex: 1,
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+    },
     help: {
         backgroundColor: 'transparent',
         color: 'white',
@@ -88,9 +94,8 @@ const App: FunctionComponent = observer(() => {
     const [state, setState] = useState<{ msg: string }>({ msg: '' });
     const store = useStore();
     useCheckUpdates();
-    const windowRef = useRef(undefined);
-    // @ts-ignore
-    const handleMouseEvent = useDrag(windowRef);
+    const windowRef = useRef<QMainWindow | undefined>(undefined);
+    const handleMouseEvent = useDrag(windowRef as MutableRefObject<QMainWindow>);
 
     function start() {
         open(resolve('WindowsNoEditor', 'Polygon.exe'));
@@ -149,6 +154,15 @@ const App: FunctionComponent = observer(() => {
                     value={store.progress!.percentage}
                 />
                 }
+                <View style={'width: 388px;'}>
+                    <View style={s.toolbar}>
+                        <ToolbarButton
+                            clicked={() => windowRef.current!.setWindowState(WindowState.WindowMinimized)}
+                            icon={minimizeIcon} styleSheet={'margin-right: 8px;'}
+                        />
+                        <ToolbarButton clicked={() => process.exit(0)} icon={closeIcon}/>
+                    </View>
+                </View>
                 <Text
                     style={s.logo}
                 >
@@ -161,7 +175,6 @@ const App: FunctionComponent = observer(() => {
                     <View style={s.actionButtons}>
                         <Button icon={playIcon} clicked={() => start()}/>
                         <Button icon={updateIcon} clicked={() => update()}/>
-                        <Button icon={quitIcon} clicked={() => process.exit(0)}/>
                     </View>
                 </View>
                 <View>
