@@ -31,6 +31,7 @@ import tgIcon from '../assets/tg.png';
 import discordIcon from '../assets/discord.png';
 import useDrag from './useDrag';
 import { store, storeContext, useStore } from './store';
+import { preventGC } from './nodeguiUtils';
 
 const cpus = os.cpus().length;
 
@@ -141,8 +142,7 @@ const App: FunctionComponent = observer(() => {
                     dialog.addButton(downloadButton, ButtonRole.AcceptRole);
                     dialog.addButton(closeButton, ButtonRole.RejectRole);
                     dialog.show();
-                    // @ts-ignore
-                    global._updateDialog = dialog;
+                    preventGC({ dialog });
                 }
             });
     }, []);
