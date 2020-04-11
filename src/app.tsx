@@ -9,7 +9,9 @@ import {
     QPushButton,
     WindowType
 } from '@nodegui/nodegui';
-import React, { FunctionComponent, MutableRefObject, RefObject, useRef, useState } from 'react';
+import React, { FunctionComponent, MutableRefObject, RefObject, useEffect, useRef, useState } from 'react';
+import { observer } from 'mobx-react';
+import 'mobx-react/batchingOptOut';
 import { resolve } from 'path';
 import open from 'open';
 import { Button } from './components/button';
@@ -28,6 +30,7 @@ import vkIcon from '../assets/vk.png';
 import tgIcon from '../assets/tg.png';
 import discordIcon from '../assets/discord.png';
 import useDrag from './useDrag';
+import { store, storeContext, useStore } from './store';
 
 const cpus = os.cpus().length;
 
@@ -95,32 +98,57 @@ const s = create({
     }
 });
 
-const app: FunctionComponent = () => {
-    const [state, setState] = useState<{ msg: string, progress: Progress | undefined }>({ msg: '', progress: undefined });
+const App: FunctionComponent = observer(() => {
+    const [state, setState] = useState<{ msg: string }>({ msg: '' });
+    const store = useStore();
     const windowRef = useRef(undefined);
     // @ts-ignore
     const handleMouseEvent = useDrag(windowRef);
 
+    useEffect(() => {
+        function newVersionAvailable(remoteVersion: string): boolean {
+            return semver.gt(remoteVersion, VERSION);
+        }
+
+        fetch('https://api.github.com/repos/Solant/polygon-launcher/releases/latest', {
+            headers: {
+                'Accept': 'application/vnd.github.v3+json',
+            }
+        })
+            .then(r => r.json())
+            .then(data => {
+                if (data.tag_name && newVersionAvailable(data.tag_name)) {
+                    const dialog = new QMessageBox();
+                    const downloadButton = new QPushButton(dialog);
+                    downloadButton.setText('Обновить сейчас');
+                    downloadButton.addEventListener('clicked', () => {
+                        const installer = data.assets.find((a: any) => a.name === 'installer.exe');
+                        if (installer) {
+                            open(installer.browser_download_url);
+                        } else {
+                            nativeErrorHandler(`Релиз ${data.tag_name} оказался без инсталлера, сообщите об этой проблеме по кнопке "Помощь"`, '');
+                        }
+                    });
+
+                    const closeButton = new QPushButton(dialog);
+                    closeButton.setText('Закрыть');
+                    closeButton.addEventListener('clicked', () => {
+                        dialog.close();
+                    });
+
+                    dialog.setWindowTitle('Доступно обновление');
+                    dialog.setText(`Доступна новая версия ${data.tag_name}`);
+                    dialog.addButton(downloadButton, ButtonRole.AcceptRole);
+                    dialog.addButton(closeButton, ButtonRole.RejectRole);
+                    dialog.show();
+                    // @ts-ignore
+                    global._updateDialog = dialog;
+                }
+            });
+    }, []);
+
     function start() {
         open(resolve('WindowsNoEditor', 'Polygon.exe'));
-    }
-
-    function updateProgress(payload: { file: string, progress: number, files: { [key: string]: number } } | undefined) {
-        if (payload) {
-            const n = {
-                ...(state.progress?.files ?? payload.files),
-                [payload.file]: payload.progress
-            };
-            setState({
-                ...state,
-                progress: {
-                    files: n,
-                    percentage: Object.values(n).reduce((c, p) => c + p, 0) / Object.values(n).length * 100,
-                },
-            });
-        } else {
-            setState({ ...state, progress: undefined });
-        }
     }
 
     async function update() {
@@ -146,20 +174,17 @@ const app: FunctionComponent = () => {
 
             setState({
                 ...state,
-                progress: {
-                    files,
-                    percentage: 0,
-                }
             });
+            store.initProgress(files);
             await downloadUpdates(updates, cpus, (arg) => {
-                updateProgress({
+                store.updateProgress({
                     file: arg.file,
                     progress: arg.progress,
                     files,
                 });
             });
             setState({...state, msg: `Обновление завершено`});
-            updateProgress(undefined);
+            store.updateProgress(undefined);
         }
     }
 
@@ -173,10 +198,10 @@ const app: FunctionComponent = () => {
             style={'background-color: #181818;'}
         >
             <View style={s.root}>
-                {state.progress &&
+                {store.progress &&
                 <ProgressBar
                     styleSheet={stylesheet}
-                    value={state.progress!.percentage}
+                    value={store.progress!.percentage}
                 />
                 }
                 <Text
@@ -213,183 +238,14 @@ const app: FunctionComponent = () => {
             </View>
         </Window>
     );
-}
+});
 
-class App extends React.Component<any, { x: number, y: number, msg: string, progress: Progress | undefined}> {
-    private readonly windowRef: React.RefObject<QMainWindow>;
+const wrapped: FunctionComponent = () => {
+    return (
+        <storeContext.Provider value={store}>
+            <App/>
+        </storeContext.Provider>
+    );
+};
 
-    constructor(props: any) {
-        super(props);
-        this.state = { x: 0, y: 0, msg: '', progress: undefined };
-        this.windowRef = React.createRef<QMainWindow>();
-
-        function newVersionAvailable(remoteVersion: string): boolean {
-            return semver.gt(remoteVersion, VERSION);
-        }
-
-        fetch('https://api.github.com/repos/Solant/polygon-launcher/releases/latest', {
-            headers: {
-                'Accept': 'application/vnd.github.v3+json',
-            }
-        })
-            .then(r => r.json())
-            .then(data => {
-                if (data.tag_name && newVersionAvailable(data.tag_name)) {
-                    const dialog = new QMessageBox();
-
-                    const downloadButton = new QPushButton(dialog);
-                    downloadButton.setText('Обновить сейчас');
-                    downloadButton.addEventListener('clicked', () => {
-                        const installer = data.assets.find((a: any) => a.name === 'installer.exe');
-                        if (installer) {
-                            open(installer.browser_download_url);
-                        } else {
-                            nativeErrorHandler(`Релиз ${data.tag_name} оказался без инсталлера, сообщите об этой проблеме по кнопке "Помощь"`, '');
-                        }
-                    });
-
-                    const closeButton = new QPushButton(dialog);
-                    closeButton.setText('Закрыть');
-                    closeButton.addEventListener('clicked', () => {
-                        dialog.close();
-                    });
-
-                    dialog.setWindowTitle('Доступно обновление');
-                    dialog.setText(`Доступна новая версия ${data.tag_name}`);
-                    dialog.addButton(downloadButton, ButtonRole.AcceptRole);
-                    dialog.addButton(closeButton, ButtonRole.RejectRole);
-                    dialog.show();
-                }
-            });
-    }
-
-    start() {
-        open(resolve('WindowsNoEditor', 'Polygon.exe'));
-    }
-
-    async update() {
-        this.setState({...this.state, msg: 'Проверка обновлений'});
-
-        const [local, remote] = await Promise.all([getLocalFiles(cpus), getRemoteFiles(cpus)]);
-        const updates = findNewRemoteFiles(local, remote);
-
-        let text = `Найдено ${updates.length} новых файлов (${getUpdateDownloadSize(updates)})`;
-        if (updates.length) {
-            text += '\nВыполняется обновление';
-        }
-        this.setState({...this.state, msg: text});
-        if (updates.length) {
-            function last<T>(a: Array<T>): T {
-                return a[a.length - 1];
-            }
-
-            this.setState({
-                ...this.state,
-                progress: {
-                    files: updates
-                        .map(v => last(v.path.split('/')))
-                        // @ts-ignore
-                        .reduce((p, c) => { p[c] = 0; return p; }, {}),
-                    percentage: 0,
-                }
-            });
-            await downloadUpdates(updates, cpus, (arg) => {
-                this.updateProgress({
-                    file: arg.file,
-                    progress: arg.progress,
-                });
-            });
-            this.setState({...this.state, msg: `Обновление завершено`});
-            this.updateProgress(undefined);
-        }
-    }
-
-    updateProgress(payload: { file: string, progress: number } | undefined) {
-        if (payload) {
-            const n = {
-                ...this.state.progress!.files,
-                [payload!.file]: payload!.progress
-            };
-            this.setState({
-                progress: {
-                    files: n,
-                    percentage: Object.values(n).reduce((c, p) => c + p, 0) / Object.values(n).length * 100,
-                },
-            });
-        } else {
-            this.setState({ progress: undefined });
-        }
-    }
-
-    handleMove(e?: NativeElement) {
-        if (!e) {
-            return;
-        }
-        const event = new QMouseEvent(e);
-        this.windowRef.current!.move(event.globalX() - this.state.x, event.globalY() - this.state.y);
-
-    }
-
-    handleClick(e?: NativeElement) {
-        if (!e) {
-            return;
-        }
-        const event = new QMouseEvent(e);
-        this.setState({ x: event.x(), y: event.y() });
-    }
-
-    render() {
-        return (
-            <Window
-                ref={this.windowRef}
-                windowFlags={{ [WindowType.FramelessWindowHint]: true }}
-                on={{ 'MouseMove': e => this.handleMove(e), 'MouseButtonPress': e => this.handleClick(e) }}
-                windowTitle="Polygon Launcher"
-                size={{ width: 400, height: 400, fixed: true }}
-                style={'background-color: #181818;'}
-            >
-                <View style={s.root}>
-                    {this.state.progress &&
-                        <ProgressBar
-                            styleSheet={stylesheet}
-                            value={this.state.progress!.percentage}
-                        />
-                    }
-                    <Text
-                        style={s.logo}
-                    >
-                        POLYGON
-                    </Text>
-                    <Text style={s.message}>
-                        {this.state.msg}
-                    </Text>
-                    <View>
-                        <View style={s.actionButtons}>
-                            <Button icon={playIcon} clicked={() => this.start()}/>
-                            <Button icon={updateIcon} clicked={() => this.update()}/>
-                            <Button icon={quitIcon} clicked={() => process.exit(0)}/>
-                        </View>
-                    </View>
-                    <View>
-                        <View style={s.socialButtons}>
-                            <SocialButton icon={tgIcon}
-                                          clicked={() => open('https://t.me/polygon_online')}/>
-                            <SocialButton icon={discordIcon}
-                                          clicked={() => open('https://discordapp.com/invite/tc9ayWK')}/>
-                            <SocialButton icon={vkIcon}
-                                          clicked={() => open('https://vk.com/polygon_online')}/>
-                        </View>
-                    </View>
-                    <NativeButton
-                        text={`Помощь (v${VERSION})`}
-                        flat={true}
-                        style={s.help}
-                        on={{'clicked': () => open('https://github.com/Solant/polygon-launcher#troubleshooting')}}
-                    />
-                </View>
-            </Window>
-        );
-    }
-}
-
-export default hot(app);
+export default hot(wrapped);
