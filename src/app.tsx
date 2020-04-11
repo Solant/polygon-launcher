@@ -1,15 +1,9 @@
 import { Button as NativeButton, hot, ProgressBar, Text, View, Window } from '@nodegui/react-nodegui';
 import {
-    ButtonRole,
-    NativeElement,
     QFontDatabase,
-    QMainWindow,
-    QMessageBox,
-    QMouseEvent,
-    QPushButton,
-    WindowType
+    WindowType,
 } from '@nodegui/nodegui';
-import React, { FunctionComponent, MutableRefObject, RefObject, useEffect, useRef, useState } from 'react';
+import React, { FunctionComponent, useRef, useState } from 'react';
 import { observer } from 'mobx-react';
 import 'mobx-react/batchingOptOut';
 import { resolve } from 'path';
@@ -19,8 +13,6 @@ import { SocialButton } from './components/social-button';
 import { downloadUpdates, findNewRemoteFiles, getLocalFiles, getRemoteFiles, getUpdateDownloadSize } from './updater';
 import { nativeErrorHandler } from './errorHandler';
 import { create, units } from 'nodegui-stylesheet';
-import fetch from 'node-fetch';
-import semver from 'semver';
 import os from 'os';
 import font from '../assets/Metropolis-Medium.otf';
 import playIcon from '../assets/play.png';
@@ -31,13 +23,13 @@ import tgIcon from '../assets/tg.png';
 import discordIcon from '../assets/discord.png';
 import useDrag from './useDrag';
 import { store, storeContext, useStore } from './store';
-import { preventGC } from './nodeguiUtils';
+import { useCheckUpdates } from './useCheckUpdates';
 
 const cpus = os.cpus().length;
 
 QFontDatabase.addApplicationFont(font);
 process.on('uncaughtException', error => nativeErrorHandler(error.message, error.stack || ''));
-process.on('unhandledRejection', (reason, promise) => {
+process.on('unhandledRejection', (reason) => {
     if (reason instanceof Error) {
         nativeErrorHandler(reason.message, reason.stack || '');
     } else {
@@ -60,13 +52,6 @@ QProgressBar::chunk {
     background-color: white;
 }
 `;
-
-interface Progress {
-    percentage: number,
-    files: {
-        [key: string]: number,
-    },
-}
 
 const s = create({
     root: {
@@ -102,50 +87,10 @@ const s = create({
 const App: FunctionComponent = observer(() => {
     const [state, setState] = useState<{ msg: string }>({ msg: '' });
     const store = useStore();
+    useCheckUpdates();
     const windowRef = useRef(undefined);
     // @ts-ignore
     const handleMouseEvent = useDrag(windowRef);
-
-    useEffect(() => {
-        function newVersionAvailable(remoteVersion: string): boolean {
-            return semver.gt(remoteVersion, VERSION);
-        }
-
-        fetch('https://api.github.com/repos/Solant/polygon-launcher/releases/latest', {
-            headers: {
-                'Accept': 'application/vnd.github.v3+json',
-            }
-        })
-            .then(r => r.json())
-            .then(data => {
-                if (data.tag_name && newVersionAvailable(data.tag_name)) {
-                    const dialog = new QMessageBox();
-                    const downloadButton = new QPushButton(dialog);
-                    downloadButton.setText('Обновить сейчас');
-                    downloadButton.addEventListener('clicked', () => {
-                        const installer = data.assets.find((a: any) => a.name === 'installer.exe');
-                        if (installer) {
-                            open(installer.browser_download_url);
-                        } else {
-                            nativeErrorHandler(`Релиз ${data.tag_name} оказался без инсталлера, сообщите об этой проблеме по кнопке "Помощь"`, '');
-                        }
-                    });
-
-                    const closeButton = new QPushButton(dialog);
-                    closeButton.setText('Закрыть');
-                    closeButton.addEventListener('clicked', () => {
-                        dialog.close();
-                    });
-
-                    dialog.setWindowTitle('Доступно обновление');
-                    dialog.setText(`Доступна новая версия ${data.tag_name}`);
-                    dialog.addButton(downloadButton, ButtonRole.AcceptRole);
-                    dialog.addButton(closeButton, ButtonRole.RejectRole);
-                    dialog.show();
-                    preventGC({ dialog });
-                }
-            });
-    }, []);
 
     function start() {
         open(resolve('WindowsNoEditor', 'Polygon.exe'));
