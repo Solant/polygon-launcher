@@ -16,6 +16,6 @@ export const ToolbarButton: FunctionComponent<{
         icon={state.icon}
         iconSize={state.size}
         on={{ clicked: () => props.clicked() }}
-        style={'background-color: transparent;height: 18px; width: 18px;' + (props.styleSheet || '')}
+        style={'background-color: transparent;height: 12px; width: 12px;' + (props.styleSheet || '')}
     />
 };
