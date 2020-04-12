@@ -1,6 +1,12 @@
 import { action, configure, observable } from 'mobx';
 import React from 'react';
 import { sync } from 'os-locale';
+import { existsSync } from 'fs';
+import { resolve } from 'path';
+
+function executableExists() {
+    return existsSync(resolve('WindowsNoEditor', 'Polygon.exe'));
+}
 
 function getSystemLocale() {
     return sync().split('-')[0];
@@ -19,9 +25,19 @@ export class AppState {
         percentage: number,
     } | undefined = undefined;
 
+    @observable
+    launchAvailable: boolean = executableExists();
+
     @action
     updateMessage(arg: string) {
         this.message = arg;
+    }
+
+    @action
+    updateFinished(message: string) {
+        this.launchAvailable = true;
+        this.progress = undefined;
+        this.message = message;
     }
 
     @action
@@ -33,13 +49,9 @@ export class AppState {
     }
 
     @action
-    updateProgress(payload: { file: string, progress: number, files: { [key: string]: number } } | undefined) {
-        if (payload) {
-            this.progress!.files[payload.file] = payload.progress;
-            this.progress!.percentage = Object.values(this.progress!.files).reduce((c, p) => c + p, 0) / Object.values(this.progress!.files).length * 100;
-        } else {
-            this.progress = undefined;
-        }
+    updateProgress(payload: { file: string, progress: number, files: { [key: string]: number } }) {
+        this.progress!.files[payload.file] = payload.progress;
+        this.progress!.percentage = Object.values(this.progress!.files).reduce((c, p) => c + p, 0) / Object.values(this.progress!.files).length * 100;
     }
 }
 

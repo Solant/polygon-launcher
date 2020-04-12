@@ -131,8 +131,7 @@ const App: FunctionComponent = observer(() => {
                     files,
                 });
             });
-            store.updateMessage(t('updateFinished'));
-            store.updateProgress(undefined);
+            store.updateFinished(t('updateFinished'));
         }
     }
 
@@ -171,7 +170,7 @@ const App: FunctionComponent = observer(() => {
                 </Text>
                 <View>
                     <View style={s.actionButtons}>
-                        <Button icon={playIcon} clicked={() => start()}/>
+                        {store.launchAvailable && <Button icon={playIcon} clicked={() => start()}/>}
                         <Button icon={updateIcon} clicked={() => update()}/>
                     </View>
                 </View>
