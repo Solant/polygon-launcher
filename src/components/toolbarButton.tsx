@@ -1,6 +1,6 @@
 import React, { FunctionComponent, useState } from 'react';
 import { Button as NativeButton } from '@nodegui/react-nodegui';
-import { QIcon, QSize } from '@nodegui/nodegui';
+import { CursorShape, QIcon, QSize } from '@nodegui/nodegui';
 
 export const ToolbarButton: FunctionComponent<{
     clicked: () => void,
@@ -13,6 +13,7 @@ export const ToolbarButton: FunctionComponent<{
     });
 
     return <NativeButton
+        cursor={CursorShape.PointingHandCursor}
         icon={state.icon}
         iconSize={state.size}
         on={{ clicked: () => props.clicked() }}

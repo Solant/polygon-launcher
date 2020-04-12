@@ -1,9 +1,10 @@
 import { Button as NativeButton, hot, ProgressBar, Text, View, Window } from '@nodegui/react-nodegui';
 import {
+    CursorShape,
     QFontDatabase, QMainWindow, WindowState,
     WindowType,
 } from '@nodegui/nodegui';
-import React, { FunctionComponent, MutableRefObject, useRef, useState } from 'react';
+import React, { FunctionComponent, MutableRefObject, useRef } from 'react';
 import { observer } from 'mobx-react';
 import 'mobx-react/batchingOptOut';
 import { resolve } from 'path';
@@ -185,6 +186,7 @@ const App: FunctionComponent = observer(() => {
                     </View>
                 </View>
                 <NativeButton
+                    cursor={CursorShape.PointingHandCursor}
                     text={`${t('help')} (v${VERSION})`}
                     flat={true}
                     style={s.help}
