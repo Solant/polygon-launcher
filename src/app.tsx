@@ -26,6 +26,7 @@ import minimizeIcon from '../assets/remove-outline.svg';
 import useDrag from './useDrag';
 import { store, storeContext, useStore } from './store';
 import { useCheckUpdates } from './useCheckUpdates';
+import { useTranslation } from './i18n';
 
 const cpus = os.cpus().length;
 
@@ -91,27 +92,27 @@ const s = create({
 });
 
 const App: FunctionComponent = observer(() => {
-    const [state, setState] = useState<{ msg: string }>({ msg: '' });
     const store = useStore();
     useCheckUpdates();
     const windowRef = useRef<QMainWindow | undefined>(undefined);
     const handleMouseEvent = useDrag(windowRef as MutableRefObject<QMainWindow>);
+    const { t } = useTranslation(store.locale);
 
     function start() {
         open(resolve('WindowsNoEditor', 'Polygon.exe'));
     }
 
     async function update() {
-        setState({...state, msg: 'Проверка обновлений'});
+        store.updateMessage(t('checkInProgress'));
 
         const [local, remote] = await Promise.all([getLocalFiles(cpus), getRemoteFiles(cpus)]);
         const updates = findNewRemoteFiles(local, remote);
 
-        let text = `Найдено ${updates.length} новых файлов (${getUpdateDownloadSize(updates)})`;
+        let text = t('updatesLog', [updates.length.toString(), getUpdateDownloadSize(updates)]);
         if (updates.length) {
-            text += '\nВыполняется обновление';
+            text += '\n' + t('updateInProgress');
         }
-        setState({...state, msg: text});
+        store.updateMessage(text);
         if (updates.length) {
             function last<T>(a: Array<T>): T {
                 return a[a.length - 1];
@@ -122,9 +123,6 @@ const App: FunctionComponent = observer(() => {
                 // @ts-ignore
                 .reduce((p, c) => { p[c] = 0; return p; }, {});
 
-            setState({
-                ...state,
-            });
             store.initProgress(files);
             await downloadUpdates(updates, cpus, (arg) => {
                 store.updateProgress({
@@ -133,7 +131,7 @@ const App: FunctionComponent = observer(() => {
                     files,
                 });
             });
-            setState({...state, msg: `Обновление завершено`});
+            store.updateMessage(t('updateFinished'));
             store.updateProgress(undefined);
         }
     }
@@ -169,7 +167,7 @@ const App: FunctionComponent = observer(() => {
                     POLYGON
                 </Text>
                 <Text style={s.message}>
-                    {state.msg}
+                    {store.message}
                 </Text>
                 <View>
                     <View style={s.actionButtons}>
@@ -188,7 +186,7 @@ const App: FunctionComponent = observer(() => {
                     </View>
                 </View>
                 <NativeButton
-                    text={`Помощь (v${VERSION})`}
+                    text={`${t('help')} (v${VERSION})`}
                     flat={true}
                     style={s.help}
                     on={{'clicked': () => open('https://github.com/Solant/polygon-launcher#troubleshooting')}}

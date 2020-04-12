@@ -1,12 +1,28 @@
 import { action, configure, observable } from 'mobx';
 import React from 'react';
+import { sync } from 'os-locale';
+
+function getSystemLocale() {
+    return sync().split('-')[0];
+}
 
 export class AppState {
+    @observable
+    locale: string = getSystemLocale();
+
+    @observable
+    message: string = '';
+
     @observable
     progress: {
         files: { [key: string]: number },
         percentage: number,
     } | undefined = undefined;
+
+    @action
+    updateMessage(arg: string) {
+        this.message = arg;
+    }
 
     @action
     initProgress(files: { [key: string]: number }) {
