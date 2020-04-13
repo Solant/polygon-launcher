@@ -64,6 +64,8 @@ Page InstFiles
 
 Section
 SetOutPath $InstDir
+File "VC_redist.x64.exe"
+ExecWait '"VC_redist.x64.exe" /passive /norestart'
 File /r "build\PolygonLauncher\*"
 WriteUninstaller "$InstDir\Uninst.exe"
 WriteRegStr HKCU "Software\Software\Microsoft\Windows\CurrentVersion\Uninstall\${UninstId}" "DisplayName" "PolygonLauncher"
