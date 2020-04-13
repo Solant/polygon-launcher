@@ -11,10 +11,6 @@
     "pack": "npm run build && nodegui-packer --pack dist"
   },
   "dependencies": {
-    "@babel/plugin-proposal-class-properties": "^7.8.3",
-    "@babel/plugin-proposal-decorators": "^7.8.3",
-    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.8.3",
-    "@babel/plugin-proposal-optional-chaining": "^7.9.0",
     "@google-cloud/storage": "^4.3.0",
     "@nodegui/nodegui": "^0.13.1",
     "@nodegui/react-nodegui": "^0.4.0",
@@ -22,7 +18,6 @@
     "md5-file": "^4.0.0",
     "mobx": "^5.15.4",
     "mobx-react": "^6.2.2",
-    "mobx-react-lite": "^2.0.5",
     "node-fetch": "^2.6.0",
     "nodegui-stylesheet": "^0.3.0",
     "open": "^7.0.0",
@@ -36,6 +31,10 @@
   },
   "devDependencies": {
     "@babel/core": "^7.7.7",
+    "@babel/plugin-proposal-class-properties": "^7.8.3",
+    "@babel/plugin-proposal-decorators": "^7.8.3",
+    "@babel/plugin-proposal-nullish-coalescing-operator": "^7.8.3",
+    "@babel/plugin-proposal-optional-chaining": "^7.9.0",
     "@babel/preset-env": "^7.7.7",
     "@babel/preset-react": "^7.7.4",
     "@babel/preset-typescript": "^7.7.7",
@@ -48,7 +47,6 @@
     "@types/recursive-readdir": "^2.2.0",
     "@types/request": "^2.48.4",
     "@types/semver": "^7.1.0",
-    "@types/webpack-env": "^1.14.1",
     "babel-loader": "^8.0.6",
     "clean-webpack-plugin": "^3.0.0",
     "file-loader": "^5.0.2",
