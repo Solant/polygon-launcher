@@ -13,13 +13,11 @@ import { ToolbarButton } from './components/toolbarButton';
 import { Button } from './components/button';
 import { SocialButton } from './components/social-button';
 import {
-    getRemoteFilesNew,
     downloadUpdates,
     findNewRemoteFiles,
     getLocalFiles,
     getRemoteFiles,
     getUpdateDownloadSize,
-    getLocalFiles2, downloadUpdates2,
 } from './updater';
 import { nativeErrorHandler } from './errorHandler';
 import { create } from 'nodegui-stylesheet';
@@ -112,46 +110,13 @@ const App: FunctionComponent = observer(() => {
     }
 
     async function update() {
-        store.updateMessage(t('checkInProgress'));
-
-        const [local, remote] = await Promise.all([getLocalFiles(cpus), getRemoteFiles(cpus)]);
-        const updates = findNewRemoteFiles(local, remote);
-
-        let text = t('updatesLog', [updates.length.toString(), getUpdateDownloadSize(updates)]);
-        if (updates.length) {
-            text += '\n' + t('updateInProgress');
-        }
-        store.updateMessage(text);
-        if (updates.length) {
-            function last<T>(a: Array<T>): T {
-                return a[a.length - 1];
-            }
-
-            const files = updates
-                .map(v => last(v.path.split('/')))
-                // @ts-ignore
-                .reduce((p, c) => { p[c] = 0; return p; }, {});
-
-            store.initProgress(files);
-            await downloadUpdates(updates, cpus, (arg) => {
-                store.updateProgress({
-                    file: arg.file,
-                    progress: arg.progress,
-                    files,
-                });
-            });
-            store.updateFinished(t('updateFinished'));
-        }
-    }
-
-    async function update2() {
-        const updateProgress = (value: number) => store.updateProgress2(value);
+        const updateProgress = (value: number) => store.updateProgress(value);
 
         store.updateMessage(t('checkRemoteFiles'));
-        const remote = await getRemoteFilesNew(updateProgress, cpus);
+        const remote = await getRemoteFiles(updateProgress, cpus);
 
         store.updateMessage(t('checkLocalFiles'));
-        const local = await getLocalFiles2(updateProgress, cpus);
+        const local = await getLocalFiles(updateProgress, cpus);
 
         const updates = findNewRemoteFiles(local, remote);
         let text = t('updatesLog', [updates.length.toString(), getUpdateDownloadSize(updates)]);
@@ -160,7 +125,7 @@ const App: FunctionComponent = observer(() => {
         }
         store.updateMessage(text);
 
-        await downloadUpdates2(updates, updateProgress, cpus);
+        await downloadUpdates(updates, updateProgress, cpus);
         store.updateFinished(t('updateFinished'));
     }
 
@@ -174,10 +139,10 @@ const App: FunctionComponent = observer(() => {
             style={'background-color: #181818;'}
         >
             <View style={s.root}>
-                {(store.progress2 && store.progress2 !== 1) &&
+                {(store.progress && store.progress !== 1) &&
                 <ProgressBar
                     styleSheet={stylesheet}
-                    value={store.progress2 * 100}
+                    value={store.progress * 100}
                 />
                 }
                 <View style={'width: 388px;'}>
@@ -200,7 +165,7 @@ const App: FunctionComponent = observer(() => {
                 <View>
                     <View style={s.actionButtons}>
                         {store.launchAvailable && <Button icon={playIcon} clicked={() => start()}/>}
-                        <Button icon={updateIcon} clicked={() => update2()}/>
+                        <Button icon={updateIcon} clicked={() => update()}/>
                     </View>
                 </View>
                 <View>

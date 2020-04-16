@@ -5,7 +5,6 @@ enum Locales {
 
 interface Messages {
     help: string,
-    checkInProgress: string,
     updatesLog: string,
     updateInProgress: string,
     updateFinished: string,
@@ -16,7 +15,6 @@ interface Messages {
 const messages: { [key in Locales]: Messages } = {
     [Locales.en]: {
         help: 'Help',
-        checkInProgress: 'Checking for updates',
         updatesLog: '%0 new files found (%1)',
         updateInProgress: 'Downloading updates',
         updateFinished: 'Update completed',
@@ -25,7 +23,6 @@ const messages: { [key in Locales]: Messages } = {
     },
     [Locales.ru]: {
         help: 'Помощь',
-        checkInProgress: 'Проверка обновлений',
         updatesLog: 'Найдено %0 новых файлов (%1)',
         updateInProgress: 'Выполняется обновление',
         updateFinished: 'Обновление завершено',
@@ -34,7 +31,22 @@ const messages: { [key in Locales]: Messages } = {
     },
 };
 
-export function useTranslation(lang: string) {
+function getLocale(a: string): Locales {
+    const defaultLocale = Locales.en;
+
+    switch (a) {
+        case Locales.en:
+            return Locales.en;
+        case Locales.ru:
+            return Locales.ru;
+        default:
+            return defaultLocale;
+    }
+}
+
+export function useTranslation(langArg: string) {
+    let lang = getLocale(langArg);
+
     function t(key: string, args?: string[]) {
         // @ts-ignore
         let msg = messages[lang][key];

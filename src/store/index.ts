@@ -20,20 +20,14 @@ export class AppState {
     message: string = '';
 
     @observable
-    progress: {
-        files: { [key: string]: number },
-        percentage: number,
-    } | undefined = undefined;
-
-    @observable
-    progress2: number | undefined;
+    progress: number | undefined;
 
     @observable
     launchAvailable: boolean = executableExists();
 
     @action
-    updateProgress2(value: number | undefined) {
-        this.progress2 = value;
+    updateProgress(value: number | undefined) {
+        this.progress = value;
     }
 
     @action
@@ -44,22 +38,7 @@ export class AppState {
     @action
     updateFinished(message: string) {
         this.launchAvailable = true;
-        this.progress = undefined;
         this.message = message;
-    }
-
-    @action
-    initProgress(files: { [key: string]: number }) {
-        this.progress = {
-            files,
-            percentage: 0,
-        };
-    }
-
-    @action
-    updateProgress(payload: { file: string, progress: number, files: { [key: string]: number } }) {
-        this.progress!.files[payload.file] = payload.progress;
-        this.progress!.percentage = Object.values(this.progress!.files).reduce((c, p) => c + p, 0) / Object.values(this.progress!.files).length * 100;
     }
 }
 
