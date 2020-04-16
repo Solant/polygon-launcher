@@ -26,7 +26,15 @@ export class AppState {
     } | undefined = undefined;
 
     @observable
+    progress2: number | undefined;
+
+    @observable
     launchAvailable: boolean = executableExists();
+
+    @action
+    updateProgress2(value: number | undefined) {
+        this.progress2 = value;
+    }
 
     @action
     updateMessage(arg: string) {

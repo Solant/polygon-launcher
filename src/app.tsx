@@ -12,7 +12,15 @@ import open from 'open';
 import { ToolbarButton } from './components/toolbarButton';
 import { Button } from './components/button';
 import { SocialButton } from './components/social-button';
-import { downloadUpdates, findNewRemoteFiles, getLocalFiles, getRemoteFiles, getUpdateDownloadSize } from './updater';
+import {
+    getRemoteFilesNew,
+    downloadUpdates,
+    findNewRemoteFiles,
+    getLocalFiles,
+    getRemoteFiles,
+    getUpdateDownloadSize,
+    getLocalFiles2, downloadUpdates2,
+} from './updater';
 import { nativeErrorHandler } from './errorHandler';
 import { create } from 'nodegui-stylesheet';
 import os from 'os';
@@ -136,6 +144,26 @@ const App: FunctionComponent = observer(() => {
         }
     }
 
+    async function update2() {
+        const updateProgress = (value: number) => store.updateProgress2(value);
+
+        store.updateMessage(t('checkRemoteFiles'));
+        const remote = await getRemoteFilesNew(updateProgress, cpus);
+
+        store.updateMessage(t('checkLocalFiles'));
+        const local = await getLocalFiles2(updateProgress, cpus);
+
+        const updates = findNewRemoteFiles(local, remote);
+        let text = t('updatesLog', [updates.length.toString(), getUpdateDownloadSize(updates)]);
+        if (updates.length) {
+            text += '\n' + t('updateInProgress');
+        }
+        store.updateMessage(text);
+
+        await downloadUpdates2(updates, updateProgress, cpus);
+        store.updateFinished(t('updateFinished'));
+    }
+
     return (
         <Window
             ref={windowRef}
@@ -146,10 +174,10 @@ const App: FunctionComponent = observer(() => {
             style={'background-color: #181818;'}
         >
             <View style={s.root}>
-                {store.progress &&
+                {(store.progress2 && store.progress2 !== 1) &&
                 <ProgressBar
                     styleSheet={stylesheet}
-                    value={store.progress!.percentage}
+                    value={store.progress2 * 100}
                 />
                 }
                 <View style={'width: 388px;'}>
@@ -172,7 +200,7 @@ const App: FunctionComponent = observer(() => {
                 <View>
                     <View style={s.actionButtons}>
                         {store.launchAvailable && <Button icon={playIcon} clicked={() => start()}/>}
-                        <Button icon={updateIcon} clicked={() => update()}/>
+                        <Button icon={updateIcon} clicked={() => update2()}/>
                     </View>
                 </View>
                 <View>
