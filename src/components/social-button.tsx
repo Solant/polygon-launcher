@@ -1,6 +1,6 @@
 import { Button as NativeButton } from "@nodegui/react-nodegui";
 import React, { FunctionComponent, useState } from "react";
-import { QIcon, QSize } from '@nodegui/nodegui';
+import { CursorShape, QIcon, QSize } from '@nodegui/nodegui';
 
 export const SocialButton: FunctionComponent<{
     clicked: () => void,
@@ -13,6 +13,7 @@ export const SocialButton: FunctionComponent<{
 
     return (
         <NativeButton
+            cursor={CursorShape.PointingHandCursor}
             icon={state.icon}
             flat={true}
             iconSize={state.size}
