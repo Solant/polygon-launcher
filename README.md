@@ -1,3 +1,6 @@
+# project is no longer maintained
+Launcher is no longer needed as Polygon uses steam launcher now. Feel free to check as an example for nodegui usage
+
 # Polygon Launcher
 
 Launcher for polygon online project, implemented with awesome [nodegui](https://github.com/nodegui/nodegui) project
